@@ -1,9 +1,6 @@
 package database;
 
 public class Database {
-    
-    // store global word counts.
-    private Corpus corpus; 
 
     public Database() {
 

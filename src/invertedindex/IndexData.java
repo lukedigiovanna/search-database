@@ -1,24 +1,24 @@
 package invertedindex;
 
+import articleRetrieval.WikipediaArticle;
+
 public class IndexData {
     // Store a reference to the document
-    private Document document;
+    private WikipediaArticle document;
     // Store the weights of this word for the given document
     // this also conveniently stores the count of the word in the document
     private float[] weights;
     private int numWeights;
 
-    public IndexData(Document document) {
+    public IndexData(WikipediaArticle document) {
         this.document = document;
+        // parse the article data for 
         this.weights = new float[20];
     }
 
-    public Document getDocument() {
+    public WikipediaArticle getArticle() {
         return this.document;
     }
 
-    public void addWeight(int wordIndex) {
-
-    }
 
 }

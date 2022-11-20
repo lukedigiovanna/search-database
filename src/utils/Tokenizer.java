@@ -27,4 +27,8 @@ public class Tokenizer {
         }
         return tokens;
     }
+
+    public static String tokenizeSingle(String term) {
+        return stemmer.stem(term.toLowerCase().replaceAll("[^a-zA-Z ]", ""));
+    }
 }

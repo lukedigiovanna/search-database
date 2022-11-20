@@ -5,17 +5,14 @@ import java.util.*;
 import articleRetrieval.WikipediaArticle;
 import utils.StopWords;
 import utils.Tokenizer;
-import utils.Stemmer;
 
 public class InvertedIndex {
     private Map<String, Set<IndexData>> index;
-    private Map<String, Integer> wordIndices;
-    private int uniqueWordCount;
-    private Stemmer stemmer;
+    // private Map<String, Integer> wordIndices;
+    // private int uniqueWordCount;
 
     public InvertedIndex() {
         this.index = new HashMap<String, Set<IndexData>>();
-        this.stemmer = new Stemmer();
     }
 
     /**
@@ -44,8 +41,8 @@ public class InvertedIndex {
         }
     }
 
-    public List<WikipediaArticle> search(String term) {
-        term = stemmer.stem(term).toLowerCase().replaceAll("[^a-zA-Z ]", "");
+    public List<WikipediaArticle> searchTerm(String term) {
+        term = Tokenizer.tokenizeSingle(term);
 
         Set<IndexData> results = this.index.get(term);
         // from the set constructed a sorted list of most relevant results.
@@ -58,10 +55,10 @@ public class InvertedIndex {
         return listResults;
     }
 
-    public List<WikipediaArticle> search(String terms) {
+    public List<WikipediaArticle> searchterms(String terms) {
         // parse the terms
-        String[] tokens = Tokenizer.tokenize(terms);
+        // String[] tokens = Tokenizer.tokenize(terms);
         // collect all things.
-
+        return null;
     }
 }

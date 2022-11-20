@@ -4,10 +4,13 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
 /**
  * Functionality to make requests to Wikipedia API to gather
@@ -47,10 +50,28 @@ public class Retriever {
             String doc = Jsoup.parse(htmlContent).text();
             
             // TODO: get list of linked articles.
-            JSONObject links = get("https://en.wikipedia.org/w/api.php?action=query&titles=" + articleTitle + "&prop=links&format=json");
+            JSONObject links = get("https://en.wikipedia.org/w/api.php?action=query&titles=" + articleTitle + "&prop=links&format=json&pllimit=max");
             System.out.println(links.toString(5));
 
-            return new WikipediaArticle(fullTitle, doc, null);
+            JSONObject pages = links.getJSONObject("query").getJSONObject("pages");
+            String pageName = pages.keys().next();
+            JSONArray arr = pages.getJSONObject(pageName).getJSONArray("links");
+            Iterator<Object> it = arr.iterator();
+            List<String> linksTo = new ArrayList<>();
+
+            while (it.hasNext()) {
+                
+                try {
+                    linksTo.add( 
+                        ((JSONObject)it.next()).getString("title")
+                    );
+                }
+                catch (Exception e) {
+
+                }
+            }
+
+            return new WikipediaArticle(fullTitle, doc, linksTo);
         }
         catch (Exception ex) {
             ex.printStackTrace();

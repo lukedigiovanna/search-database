@@ -1,7 +1,6 @@
 package invertedindex;
 
 import java.util.List;
-import java.util.Set;
 import articleRetrieval.WikipediaArticle;
 import utils.StopWords;
 
@@ -16,7 +15,7 @@ public class Test {
         index.add(d2);
         index.add(d3);
 
-        List<WikipediaArticle> found = index.search("dogs");
+        List<WikipediaArticle> found = index.searchTerm("dog");
         for (WikipediaArticle d : found) {
             System.out.println(d.getTitle() + ": " + d.body());
         }

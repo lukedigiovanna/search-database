@@ -34,9 +34,7 @@ public class InvertedIndex {
             // otherwise, put it in the map
             if (!this.index.containsKey(tokens[i])) {
                 this.index.put(tokens[i], new HashSet<IndexData>());
-                // this.wordIndices.put(words[i].)
             }
-
             this.index.get(tokens[i]).add(new IndexData(d));
         }
     }

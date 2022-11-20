@@ -34,25 +34,26 @@ public class Retriever {
             return new JSONObject(content.toString());
         }
         catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
 
     public static WikipediaArticle getArticle(String articleTitle) {
+        articleTitle = articleTitle.replace(' ', '_');
         // makes requests to the wikipedia API to get the content of the given article
         try {
-            JSONObject article = get("https://en.wikipedia.org/w/api.php?action=parse&page="+articleTitle+"&prop=text&format=json");            
+            JSONObject article = get("https://en.wikipedia.org/w/api.php?action=parse&page="+articleTitle+"&prop=text&format=json&redirects=true");            
             JSONObject parse = article.getJSONObject("parse");
+            if (parse == null) {
+                return null;
+            }
             String fullTitle = parse.getString("title");
             String htmlContent = parse.getJSONObject("text")
                                 .getString("*");
             String doc = Jsoup.parse(htmlContent).text();
             
-            // TODO: get list of linked articles.
             JSONObject links = get("https://en.wikipedia.org/w/api.php?action=query&titles=" + articleTitle + "&prop=links&format=json&pllimit=max");
-            System.out.println(links.toString(5));
-
+            
             JSONObject pages = links.getJSONObject("query").getJSONObject("pages");
             String pageName = pages.keys().next();
             JSONArray arr = pages.getJSONObject(pageName).getJSONArray("links");
@@ -74,8 +75,6 @@ public class Retriever {
             return new WikipediaArticle(fullTitle, doc, linksTo);
         }
         catch (Exception ex) {
-            ex.printStackTrace();
-            
             return null;
         }
         

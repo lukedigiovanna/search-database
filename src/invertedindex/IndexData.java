@@ -20,5 +20,19 @@ public class IndexData {
         return this.document;
     }
 
+    @Override
+    public int hashCode() {
+        return this.document.getTitle().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other != null && other instanceof IndexData) {
+            return ((IndexData) other).document.getTitle().equals(this.document.getTitle());
+        }
+        else {
+            return false;
+        }
+    }
 
 }

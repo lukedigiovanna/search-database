@@ -95,7 +95,7 @@ public class InvertedIndex {
         Collections.reverse(pairResults);
 
         for (int i = 0; i < Math.min(20, pairResults.size()); i++) {
-            System.out.println(pairResults.get(i).article.getTitle());
+            System.out.println(pairResults.get(i).article.getTitle() + ", " + pairResults.get(i).weight);
         }
 
         return pairResults;

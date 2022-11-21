@@ -72,7 +72,10 @@ public class Retriever {
                 }
             }
 
-            return new WikipediaArticle(fullTitle, doc, linksTo);
+            JSONObject inbound = get("https://linkcount.toolforge.org/api/?page=" + articleTitle + "&project=en.wikipedia.org&namespaces=0");
+            int inboundCount = inbound.getJSONObject("wikilinks").getInt("all");
+
+            return new WikipediaArticle(fullTitle, doc, inboundCount, linksTo);
         }
         catch (Exception ex) {
             return null;

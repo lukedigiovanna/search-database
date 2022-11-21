@@ -52,8 +52,8 @@ public class Crawler {
             }
             // otherwise, write the article
             System.out.println(article.getTitle());
-            writer.write(article.getTitle());
-            writer.write('\n');
+            writer.write("\"" + article.getTitle() + "\",");
+            writer.write("" + article.getInboundLinks() + ",");
             // only allow the first 4000 characters to be written
             if (body.length() > 4000) {
                 // chop it
@@ -62,8 +62,8 @@ public class Crawler {
                 body = body.substring(0, lastIndex);
             }
             body = body.replace("\n", "");
-            writer.write(body);
-            writer.write('\n');
+            body = body.replace("\"", "\"\"");
+            writer.write("\"" + body + "\"\n");
 
             writtenCount++;
 

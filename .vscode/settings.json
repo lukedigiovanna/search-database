@@ -4,6 +4,7 @@
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
         "json.jar",
-        "jsoup.jar"
+        "jsoup.jar",
+        "http.jar"
     ]
 }

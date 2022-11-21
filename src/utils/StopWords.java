@@ -17,8 +17,7 @@ public class StopWords {
             reader = new BufferedReader(new FileReader("stopwords.txt"));
             String word;
             while ((word = reader.readLine()) != null) {
-                System.out.println(word);
-                stopWords.add(word);
+                stopWords.add(Tokenizer.tokenizeSingle(word));
             }
             reader.close();
         }

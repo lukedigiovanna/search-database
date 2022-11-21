@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <h1>
+            Search Engine Test Frame
+        </h1>
+        <input type="text" id="search-input"/>
+        <button onclick="search();">
+            submit
+        </button>
+        <div id="results"></div>
+        <script>
+            const results = document.getElementById("results");
+            const inp = document.getElementById("search-input");
+
+            function search() {
+                const val = inp.value;
+                console.log(val);
+                fetch(`/api/search?term=${val}`)
+                    .then(response => response.json())
+                    .then(
+                        (response) => {
+                            console.log(response);
+                            results.innerHTML = "";
+                            response.results.forEach(article => {
+                                const title = document.createElement("h1");
+                                title.innerText = article.title + ": " + article.score;
+                                const body = document.createElement("p");
+                                body.innerText = article.body.substring(0, 300);
+                                results.appendChild(title);
+                                results.appendChild(body);
+                            });
+                        }
+                    );
+            }
+        </script>
+    </body>
+</html>

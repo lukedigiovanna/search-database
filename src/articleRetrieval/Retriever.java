@@ -50,7 +50,7 @@ public class Retriever {
             String fullTitle = parse.getString("title");
             String htmlContent = parse.getJSONObject("text")
                                 .getString("*");
-            String doc = Jsoup.parse(htmlContent).text();
+            String doc = Jsoup.parse(htmlContent).children().select("p").text();
             
             JSONObject links = get("https://en.wikipedia.org/w/api.php?action=query&titles=" + articleTitle + "&prop=links&format=json&pllimit=max");
             

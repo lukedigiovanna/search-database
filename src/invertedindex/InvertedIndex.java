@@ -8,11 +8,14 @@ import utils.Tokenizer;
 
 public class InvertedIndex {
     private Map<String, Set<IndexData>> index;
-    // private Map<String, Integer> wordIndices;
-    // private int uniqueWordCount;
 
     public InvertedIndex() {
         this.index = new HashMap<String, Set<IndexData>>();
+    }
+
+    private static float calculatePositionalWeight(float x) {
+        return 6.0f / (1.0f + (float)Math.exp(4 * x));
+        // return x;
     }
 
     /**
@@ -24,6 +27,7 @@ public class InvertedIndex {
         // tokenize the document body. 
         // take out from the document all of the words and disregard any punctuation
         String[] tokens = d.tokens();
+        Map<String, Float> embedding = d.getEmbedding();
         // add this document to each word's hashset.
         for (int i = 0; i < tokens.length; i++) {
             // we only care about non-stop words
@@ -35,28 +39,75 @@ public class InvertedIndex {
             if (!this.index.containsKey(tokens[i])) {
                 this.index.put(tokens[i], new HashSet<IndexData>());
             }
+            // update the embedding (will update all existing index data utilizing this embedding)
+            if (!embedding.containsKey(tokens[i])) {
+                embedding.put(tokens[i], 0.0f);
+            }
+            // apply positional weighting
+            embedding.put(tokens[i], embedding.get(tokens[i]) + calculatePositionalWeight((float) i / tokens.length));
+            // add this index data to the inverted index
             this.index.get(tokens[i]).add(new IndexData(d));
         }
-    }
 
-    public List<WikipediaArticle> searchTerm(String term) {
-        term = Tokenizer.tokenizeSingle(term);
-
-        Set<IndexData> results = this.index.get(term);
-        // from the set constructed a sorted list of most relevant results.
-        // each document can calculate some relevancy score to the term.
-        // sort via this value.
-        List<WikipediaArticle> listResults = new ArrayList<>();
-        for (IndexData article : results) {
-            listResults.add(article.getArticle());
+        // Apply L2 norm to the embedding
+        float mag = 0.0f;
+        for (String term : embedding.keySet()) {
+            mag += embedding.get(term) * embedding.get(term);
         }
-        return listResults;
+        mag = (float) Math.sqrt(mag);
+        for (String term : embedding.keySet()) {
+            // uses a scalar factor of 100
+            embedding.put(term, embedding.get(term) / mag * 100.0f);
+        }
     }
 
-    public List<WikipediaArticle> searchterms(String terms) {
-        // parse the terms
-        // String[] tokens = Tokenizer.tokenize(terms);
-        // collect all things.
-        return null;
+    public List<ArticleWeightPair> search(String term) {
+        String[] tokens = Tokenizer.tokenize(term);
+
+        Set<IndexData> results = new HashSet<>();
+        Map<String, Float> searchEmbedding = new HashMap<>();
+        // calculate the intersection among all of the sets for
+        // each corresponding term
+        for (String token : tokens) {
+            Set<IndexData> found = this.index.get(token);
+            if (found != null) {
+                if (results.size() == 0) {
+                    results.addAll(this.index.get(token));
+                }
+                else {
+                    results.retainAll(this.index.get(token));
+                }
+            }
+
+            searchEmbedding.put(token, 1.0f);
+        }
+        List<ArticleWeightPair> pairResults = new ArrayList<>();
+        for (IndexData d : results) {
+            pairResults.add(
+                new ArticleWeightPair(
+                    d.getArticle(), 
+                    d.getArticle().calculateRanking(searchEmbedding)
+                )
+            );
+        }
+
+        Collections.sort(pairResults);
+        Collections.reverse(pairResults);
+
+        for (int i = 0; i < Math.min(20, pairResults.size()); i++) {
+            System.out.println(pairResults.get(i).article.getTitle());
+        }
+
+        return pairResults;
+
+        // List<WikipediaArticle> listResults = new ArrayList<>();
+        // int i = 0;
+        // for (ArticleWeightPair pair : pairResults) {
+        //     listResults.add(pair.article);
+        //     System.out.println(pair.article.getTitle() + ", " + pair.weight);
+        //     if (++i >= 20) break;
+        // }
+
+        // return listResults;
     }
 }

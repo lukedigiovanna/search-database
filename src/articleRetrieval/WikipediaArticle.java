@@ -2,7 +2,9 @@ package articleRetrieval;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
+
+import org.json.JSONObject;
 
 import utils.Tokenizer;
 
@@ -15,11 +17,13 @@ public class WikipediaArticle {
     private String title; // title of the article
     private List<String> linksTo; // list of article titles that this wikipedia article has links to
     private String[] tokens;
+    private Map<String, Float> embedding; // embedding is generated when inserted into a database.
 
     public WikipediaArticle(String title, String body, List<String> linksTo) {
         this.body = body;
         // tokenize the body
-        this.tokens =  Tokenizer.tokenize(body);
+        this.tokens =  Tokenizer.tokenize(title + " " + body);
+        this.embedding = new HashMap<>();
         this.title = title;
         this.linksTo = linksTo;
     }
@@ -53,6 +57,33 @@ public class WikipediaArticle {
 
     public List<String> getLinkedArticle() {
         return this.linksTo;
+    }
+
+    public Map<String, Float> getEmbedding() {
+        return this.embedding;
+    }
+
+    /**
+     * Calculates a simple dot product between this articles embedding
+     * and the given search embedding
+     * @param searchEmbedding
+     * @return
+     *  Dot product between the two embeddings.
+     */
+    public float calculateRanking(Map<String, Float> searchEmbedding) {
+        float rank = 0.0f;
+        for (String term : searchEmbedding.keySet()) {
+            float thisVal = this.embedding.containsKey(term) ? this.embedding.get(term) : 0;
+            rank += thisVal;
+        }
+        return rank;
+    }
+
+    public JSONObject getJSON() {
+        JSONObject obj = new JSONObject();
+        obj.put("title", this.title);
+        obj.put("body", this.body);
+        return obj;
     }
 
     /**

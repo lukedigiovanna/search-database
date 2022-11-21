@@ -61,6 +61,7 @@ public class Crawler {
                 while (body.charAt(lastIndex) != ' ') lastIndex--;
                 body = body.substring(0, lastIndex);
             }
+            body = body.replace("\n", "");
             writer.write(body);
             writer.write('\n');
 

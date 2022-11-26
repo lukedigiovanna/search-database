@@ -2,15 +2,15 @@ package invertedindex;
 
 import java.util.*;
 
-import articleRetrieval.WikipediaArticle;
+import articleRetrieval.Document;
 import utils.StopWords;
 import utils.Tokenizer;
 
-public class InvertedIndex {
-    private Map<String, Set<WikipediaArticle>> index;
+public class InvertedIndex< T extends Document > {
+    private Map<String, Set<T>> index;
 
     public InvertedIndex() {
-        this.index = new HashMap<String, Set<WikipediaArticle>>();
+        this.index = new HashMap<String, Set<T>>();
     }
 
     private static float calculatePositionalWeight(float x) {
@@ -23,7 +23,7 @@ public class InvertedIndex {
      * @param d
      *          Article to add
      */
-    public void add(WikipediaArticle d) {
+    public void add(T d) {
         // tokenize the document body. 
         // take out from the document all of the words and disregard any punctuation
         String[] tokens = d.tokens();
@@ -37,7 +37,7 @@ public class InvertedIndex {
 
             // otherwise, put it in the map
             if (!this.index.containsKey(tokens[i])) {
-                this.index.put(tokens[i], new HashSet<WikipediaArticle>());
+                this.index.put(tokens[i], new HashSet<T>());
             }
             // update the embedding (will update all existing index data utilizing this embedding)
             if (!embedding.containsKey(tokens[i])) {
@@ -61,15 +61,15 @@ public class InvertedIndex {
         }
     }
 
-    public List<ArticleWeightPair> search(String term) {
+    public List<DocumentWeightPair> search(String term) {
         String[] tokens = Tokenizer.tokenize(term);
 
-        Set<WikipediaArticle> results = new HashSet<>();
+        Set<T> results = new HashSet<>();
         Map<String, Float> searchEmbedding = new HashMap<>();
         // calculate the intersection among all of the sets for
         // each corresponding term
         for (String token : tokens) {
-            Set<WikipediaArticle> found = this.index.get(token);
+            Set<T> found = this.index.get(token);
             if (found != null) {
                 if (results.size() == 0) {
                     results.addAll(this.index.get(token));
@@ -83,10 +83,10 @@ public class InvertedIndex {
             searchEmbedding.put(token, 1.0f / (float)Math.log(found.size()));
             // searchEmbedding.put(token, 50f);
         }
-        List<ArticleWeightPair> pairResults = new ArrayList<>();
-        for (WikipediaArticle d : results) {
+        List<DocumentWeightPair> pairResults = new ArrayList<>();
+        for (T d : results) {
             pairResults.add(
-                new ArticleWeightPair(
+                new DocumentWeightPair(
                     d, 
                     d.calculateRanking(searchEmbedding)
                 )

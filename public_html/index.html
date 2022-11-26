@@ -33,8 +33,11 @@
                 Search Engine Test Frame
             </h1>
             <input type="text" id="search-input"/>
-            <button onclick="fetchSearch();">
-                submit
+            <button onclick="searchArticles();">
+                search articles
+            </button>
+            <button onclick="searchImages();">
+                search images
             </button>
         </div>
         <div id="results">
@@ -49,37 +52,35 @@
             const results = document.getElementById("results");
             const inp = document.getElementById("search-input");
 
-            function fuck() {
-                console.log('fuck');
+            async function searchArticles() {
+                const val = inp.value;
+                const raw = await fetch(`/api/search?term=${val}`);
+                const response = await raw.json();
+                
+                results.innerHTML = "";
+                const total = document.createElement("p");
+                total.innerText = "Found " + response.results.length + " articles in " + (response.time / 1000) + "s.";
+                results.appendChild(total);
+                response.results.forEach(article => {
+                    const title = document.createElement("h1");
+                    title.innerText = article.title + ": " + article.score;
+                    const link = document.createElement("a");
+                    const url = `https://en.wikipedia.org/wiki/${article.title.replace(" ", "_")}`;
+                    link.href = url;
+                    link.innerText = url;
+                    const body = document.createElement("p");
+                    body.innerText = article.body.substring(0, 300);
+                    results.appendChild(title);
+                    results.appendChild(link);
+                    results.appendChild(body);
+                });
             }
 
-            function fetchSearch() {
+            async function searchImages() {
                 const val = inp.value;
-                console.log(val);
-                fetch(`/api/search?term=${val}`)
-                    .then(response => response.json())
-                    .then(
-                        (response) => {
-                            console.log(response);
-                            results.innerHTML = "";
-                            const total = document.createElement("p");
-                            total.innerText = "Found " + response.results.length + " articles in " + (response.time / 1000) + "s.";
-                            results.appendChild(total);
-                            response.results.forEach(article => {
-                                const title = document.createElement("h1");
-                                title.innerText = article.title + ": " + article.score;
-                                const link = document.createElement("a");
-                                const url = `https://en.wikipedia.org/wiki/${article.title.replace(" ", "_")}`;
-                                link.href = url;
-                                link.innerText = url;
-                                const body = document.createElement("p");
-                                body.innerText = article.body.substring(0, 300);
-                                results.appendChild(title);
-                                results.appendChild(link);
-                                results.appendChild(body);
-                            });
-                        }
-                    );
+                const raw = await fetch(`/api/image-search?term=${val}`);
+                const response = await raw.json();
+                console.log(response);
             }
         </script>
     </body>

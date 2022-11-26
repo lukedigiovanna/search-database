@@ -7,10 +7,10 @@ import utils.StopWords;
 import utils.Tokenizer;
 
 public class InvertedIndex {
-    private Map<String, Set<IndexData>> index;
+    private Map<String, Set<WikipediaArticle>> index;
 
     public InvertedIndex() {
-        this.index = new HashMap<String, Set<IndexData>>();
+        this.index = new HashMap<String, Set<WikipediaArticle>>();
     }
 
     private static float calculatePositionalWeight(float x) {
@@ -37,7 +37,7 @@ public class InvertedIndex {
 
             // otherwise, put it in the map
             if (!this.index.containsKey(tokens[i])) {
-                this.index.put(tokens[i], new HashSet<IndexData>());
+                this.index.put(tokens[i], new HashSet<WikipediaArticle>());
             }
             // update the embedding (will update all existing index data utilizing this embedding)
             if (!embedding.containsKey(tokens[i])) {
@@ -46,7 +46,7 @@ public class InvertedIndex {
             // apply positional weighting
             embedding.put(tokens[i], embedding.get(tokens[i]) + calculatePositionalWeight((float) i / tokens.length));
             // add this index data to the inverted index
-            this.index.get(tokens[i]).add(new IndexData(d));
+            this.index.get(tokens[i]).add(d);
         }
 
         // Apply L2 norm to the embedding
@@ -64,12 +64,12 @@ public class InvertedIndex {
     public List<ArticleWeightPair> search(String term) {
         String[] tokens = Tokenizer.tokenize(term);
 
-        Set<IndexData> results = new HashSet<>();
+        Set<WikipediaArticle> results = new HashSet<>();
         Map<String, Float> searchEmbedding = new HashMap<>();
         // calculate the intersection among all of the sets for
         // each corresponding term
         for (String token : tokens) {
-            Set<IndexData> found = this.index.get(token);
+            Set<WikipediaArticle> found = this.index.get(token);
             if (found != null) {
                 if (results.size() == 0) {
                     results.addAll(this.index.get(token));
@@ -79,14 +79,16 @@ public class InvertedIndex {
                 }
             }
 
-            searchEmbedding.put(token, 1.0f);
+            // incorporate tf-idf modification
+            searchEmbedding.put(token, 1.0f / (float)Math.log(found.size()));
+            // searchEmbedding.put(token, 50f);
         }
         List<ArticleWeightPair> pairResults = new ArrayList<>();
-        for (IndexData d : results) {
+        for (WikipediaArticle d : results) {
             pairResults.add(
                 new ArticleWeightPair(
-                    d.getArticle(), 
-                    d.getArticle().calculateRanking(searchEmbedding)
+                    d, 
+                    d.calculateRanking(searchEmbedding)
                 )
             );
         }
@@ -94,20 +96,10 @@ public class InvertedIndex {
         Collections.sort(pairResults);
         Collections.reverse(pairResults);
 
-        for (int i = 0; i < Math.min(20, pairResults.size()); i++) {
-            System.out.println(pairResults.get(i).article.getTitle() + ", " + pairResults.get(i).weight);
-        }
-
-        return pairResults;
-
-        // List<WikipediaArticle> listResults = new ArrayList<>();
-        // int i = 0;
-        // for (ArticleWeightPair pair : pairResults) {
-        //     listResults.add(pair.article);
-        //     System.out.println(pair.article.getTitle() + ", " + pair.weight);
-        //     if (++i >= 20) break;
+        // for (int i = 0; i < Math.min(20, pairResults.size()); i++) {
+        //     System.out.println(pairResults.get(i).article.getTitle() + ", " + pairResults.get(i).weight);
         // }
 
-        // return listResults;
+        return pairResults;
     }
 }

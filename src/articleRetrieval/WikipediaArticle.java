@@ -34,10 +34,6 @@ public class WikipediaArticle {
         this(title, body, inboundLinks, null);
     }
 
-    public String getURL() {
-        return "";
-    }
-
     public String body() {
         return this.body;
     }
@@ -79,13 +75,16 @@ public class WikipediaArticle {
     public float calculateRanking(Map<String, Float> searchEmbedding) {
         float rank = 0.0f;
         for (String term : searchEmbedding.keySet()) {
-            float thisVal = this.embedding.containsKey(term) ? this.embedding.get(term) : 0;
+            float thisVal = this.embedding.containsKey(term) ? 
+                this.embedding.get(term) * searchEmbedding.get(term) // incorporate search term weight
+                : 0;
             rank += thisVal;
         }
         if (this.inboundLinks > 0) {
             // an article more highly linked to should have higher relevance
             rank *= Math.log10(this.inboundLinks);
         }
+        rank *= Math.log10(this.body.length());
         return rank;
     }
 
@@ -97,21 +96,22 @@ public class WikipediaArticle {
         return obj;
     }
 
+    @Override
+    public int hashCode() {
+        return this.getTitle().hashCode();
+    }
+
     /**
-     * Saves this article to a .txt file according to the following format:
-     * First line is the article's full name
-     * The rest of the file is the direct content of the file.
-     * @param filepath
+     * Implements the equals method based on the title of the article.
+     * This is under the assumption that no two articles have the same title.
      */
-    public void saveData(String directory) {
-        try {
-            FileWriter file = new FileWriter(directory + "/" + this.title + ".txt");
-            file.write(this.title + "\n");
-            file.write(this.body);
-            file.close();
+    @Override
+    public boolean equals(Object other) {
+        if (other != null && other instanceof WikipediaArticle) {
+            return ((WikipediaArticle) other).getTitle().equals(this.getTitle());
         }
-        catch (IOException e) {
-            e.printStackTrace();
+        else {
+            return false;
         }
     }
 

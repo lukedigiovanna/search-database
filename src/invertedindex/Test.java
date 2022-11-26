@@ -84,6 +84,19 @@ public class Test {
         System.out.println("Finished constructing index");
         reader.close();
 
+        Runtime runtime = Runtime.getRuntime();
+
+        
+        long maxMemory = runtime.maxMemory();
+        long allocatedMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+
+
+
+        System.out.println("free memory: " + freeMemory / 1024);
+        System.out.println("allocated memory: " + allocatedMemory / 1024);
+        System.out.println("max memory: " + maxMemory / 1024);
+        System.out.println("total free memory: " + (freeMemory + (maxMemory - allocatedMemory)) / 1024);
 
         // launch a server
         HttpServer server = HttpServer.create(new InetSocketAddress(9000), 0);
@@ -92,7 +105,9 @@ public class Test {
             public void handle(HttpExchange he) throws IOException {
                 Map<String, String> params = getQueryParams(he.getRequestURI().getQuery());
                 String term = params.get("term");
+                long currTime = System.currentTimeMillis();
                 List<ArticleWeightPair> found = index.search(term);
+                long elapsed = System.currentTimeMillis() - currTime;
                 JSONObject response = new JSONObject();
                 JSONArray results = new JSONArray();
                 for (ArticleWeightPair pair : found) {
@@ -101,6 +116,7 @@ public class Test {
                     results.put(articleJSON);
                 }
                 response.put("results", results);
+                response.put("time", elapsed);
                 String res = response.toString();
                 he.sendResponseHeaders(200, res.length());
                 OutputStream os = he.getResponseBody();

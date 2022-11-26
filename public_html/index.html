@@ -5,19 +5,40 @@
             WINP - Wikipedia Inverted Index Project
         </title>
         <style>
-            
+            div#results {
+                margin: auto;
+                display: block;
+                max-width: 800px;
+            }
+
+            #navbar {
+                margin: auto;
+                display: block;
+                max-width: 900px;
+            }
+
+            h1 {
+                margin-top: 5px;
+                margin-bottom: 0px;
+            }
+
+            a, p {
+                margin: 0;
+            }
         </style>
     </head>
     <body>
-        <h1>
-            Search Engine Test Frame
-        </h1>
-        <input type="text" id="search-input"/>
-        <button onclick="search();">
-            submit
-        </button>
+        <div id="navbar">
+            <h1>
+                Search Engine Test Frame
+            </h1>
+            <input type="text" id="search-input"/>
+            <button onclick="fetchSearch();">
+                submit
+            </button>
+        </div>
         <div id="results">
-
+            No results
         </div>
         <script
             src="https://code.jquery.com/jquery-3.6.1.min.js"
@@ -28,7 +49,11 @@
             const results = document.getElementById("results");
             const inp = document.getElementById("search-input");
 
-            function search() {
+            function fuck() {
+                console.log('fuck');
+            }
+
+            function fetchSearch() {
                 const val = inp.value;
                 console.log(val);
                 fetch(`/api/search?term=${val}`)
@@ -37,12 +62,21 @@
                         (response) => {
                             console.log(response);
                             results.innerHTML = "";
+                            const total = document.createElement("p");
+                            total.innerText = "Found " + response.results.length + " articles in " + (response.time / 1000) + "s.";
+                            results.appendChild(total);
                             response.results.forEach(article => {
                                 const title = document.createElement("h1");
                                 title.innerText = article.title + ": " + article.score;
+                                const link = document.createElement("a");
+                                const url = `https://en.wikipedia.org/wiki/${article.title.replace(" ", "_")}`;
+                                link.href = url;
+                                link.innerText = url;
                                 const body = document.createElement("p");
                                 body.innerText = article.body.substring(0, 300);
+
                                 results.appendChild(title);
+                                results.appendChild(link);
                                 results.appendChild(body);
                             });
                         }

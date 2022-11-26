@@ -19,7 +19,7 @@ public class Tokenizer {
      *      String array of tokenized form. Maintains order of tokens.
      */
     public static String[] tokenize(String string) {
-        String[] tokens = string.replaceAll("[^a-zA-Z ]", "")
+        String[] tokens = string.replaceAll("[^a-zA-Z0-9 ]", "")
                                 .toLowerCase()
                                 .split("\\s+");
         for (int i = 0; i < tokens.length; i++) {

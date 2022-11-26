@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Queue;
 
 public class Crawler {
@@ -11,9 +12,12 @@ public class Crawler {
         Queue<String> articles = new ArrayDeque<>(500);
         articles.offer("Pet door");
 
-        File file = new File("articles/all.txt");
+        File articleFile = new File("articles/articles.txt");
         // Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.US_ASCII);
-        Writer writer = new OutputStreamWriter(new FileOutputStream(file));
+        Writer articleWriter = new OutputStreamWriter(new FileOutputStream(articleFile));
+
+        File imageFile = new File("articles/images.txt");
+        Writer imageWriter = new OutputStreamWriter(new FileOutputStream(imageFile), StandardCharsets.US_ASCII);
 
         String[] stopIntros = {
             "Redirect to:",
@@ -22,10 +26,11 @@ public class Crawler {
         };
 
         HashSet<String> seen = new HashSet<>();
+        HashSet<String> seenImages = new HashSet<>();
 
         int writtenCount = 0;
 
-        while (writtenCount < 250000) {
+        while (writtenCount < 20) {
             // take the next article
             String title = articles.poll();
             if (seen.contains(title)) {
@@ -33,11 +38,12 @@ public class Crawler {
                 continue;
             }
             seen.add(title);
-            WikipediaArticle article = Retriever.getArticle(title);
-            if (article == null) {
+            RetrieverResults results = Retriever.getArticle(title);
+            if (results == null) {
                 System.out.println("[NOT FOUND] " + title);
                 continue;
             }
+            WikipediaArticle article = results.article;
             // determine if we should reject this article based on its body
             String body = article.body();
             boolean reject = false;
@@ -53,8 +59,9 @@ public class Crawler {
             }
             // otherwise, write the article
             System.out.println(article.getTitle());
-            writer.write(article.getTitle() + "\n");
-            writer.write(article.getInboundLinks() + "\n");
+
+            articleWriter.write(article.getTitle() + "\n");
+            articleWriter.write(article.getInboundLinks() + "\n");
             // only allow the first 4000 characters to be written
             if (body.length() > 4000) {
                 // chop it
@@ -62,10 +69,13 @@ public class Crawler {
                 while (body.charAt(lastIndex) != ' ') lastIndex--;
                 body = body.substring(0, lastIndex);
             }
-            body = body.replace("\n", "");
-            body = body.replaceAll("\\[.*\\]", "");
             
-            writer.write(body + "\n");
+            articleWriter.write(body + "\n");
+
+            // List<WikipediaImage> images = results.images;
+            // for (WikipediaImage image : images) {
+            //     if (seenImages.contains(image.getURL()));
+            // }
 
             writtenCount++;
 
@@ -81,7 +91,8 @@ public class Crawler {
             }
         }
 
-        writer.close();
+        articleWriter.close();
+        imageWriter.close();
 
     }
 }

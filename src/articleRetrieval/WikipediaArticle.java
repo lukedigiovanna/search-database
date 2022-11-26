@@ -1,7 +1,5 @@
 package articleRetrieval;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 import org.json.JSONObject;
@@ -12,7 +10,7 @@ import utils.Tokenizer;
  * Stores important information about a particular wikipedia article
  * that will be useful when constructing the search engine.
  */
-public class WikipediaArticle {
+public class WikipediaArticle implements Document {
     private String body; // full body of the article.
     private String title; // title of the article
     private List<String> linksTo; // list of article titles that this wikipedia article has links to

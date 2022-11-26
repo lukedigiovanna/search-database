@@ -11,6 +11,9 @@ import java.util.List;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  * Functionality to make requests to Wikipedia API to gather
@@ -38,7 +41,7 @@ public class Retriever {
         }
     }
 
-    public static WikipediaArticle getArticle(String articleTitle) {
+    public static RetrieverResults getArticle(String articleTitle) {
         articleTitle = articleTitle.replace(' ', '_');
         // makes requests to the wikipedia API to get the content of the given article
         try {
@@ -50,8 +53,24 @@ public class Retriever {
             String fullTitle = parse.getString("title");
             String htmlContent = parse.getJSONObject("text")
                                 .getString("*");
-            String doc = Jsoup.parse(htmlContent).children().select("p").text();
-            
+            Document htmlDoc = Jsoup.parse(htmlContent);
+            String doc = htmlDoc.children().select("p")
+                            .text() // extract content
+                            .replaceAll("\\[.*\\]", "") // remove references
+                            .replace("\n", ""); // remove new line chars
+            // select all img tags
+            Elements elements = htmlDoc.select(".thumb");
+            for (Element el : elements) {
+                // System.out.println(el.attr("src"));
+                Element img = el.selectFirst("img");
+                String alt = img.attr("alt");
+                String url = img.attr("src").substring(47);
+                String caption = el.text().replaceAll("\\[.*\\]", "");
+                System.out.println(alt + " " + caption);
+                System.out.println(url);
+
+            }
+
             JSONObject links = get("https://en.wikipedia.org/w/api.php?action=query&titles=" + articleTitle + "&prop=links&format=json&pllimit=max");
             
             JSONObject pages = links.getJSONObject("query").getJSONObject("pages");
@@ -61,25 +80,36 @@ public class Retriever {
             List<String> linksTo = new ArrayList<>();
 
             while (it.hasNext()) {
-                
                 try {
                     linksTo.add( 
                         ((JSONObject)it.next()).getString("title")
                     );
                 }
-                catch (Exception e) {
-
-                }
+                catch (Exception e) {}
             }
 
             JSONObject inbound = get("https://linkcount.toolforge.org/api/?page=" + articleTitle + "&project=en.wikipedia.org&namespaces=0");
             int inboundCount = inbound.getJSONObject("wikilinks").getInt("all");
 
-            return new WikipediaArticle(fullTitle, doc, inboundCount, linksTo);
+            WikipediaArticle wikiArticle = new WikipediaArticle(fullTitle, doc, inboundCount, linksTo);
+
+            RetrieverResults results = new RetrieverResults(wikiArticle, null);
+
+            return results;
         }
         catch (Exception ex) {
             return null;
         }
         
     }
+
+
+    /**
+     * Tests single instance of Retriever.getArticle function.
+     * @param args
+     */
+    public static void main(String[] args) {
+        Retriever.getArticle("Donald Trump");
+    }
+
 }

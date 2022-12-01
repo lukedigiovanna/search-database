@@ -9,42 +9,41 @@ import java.util.Queue;
 
 public class Crawler {
     private static String[] stopIntros = {
-        "Redirect to:",
-        "This article needs additional citations for verification.",
-        "This article does not cite any sources."
+            "Redirect to:",
+            "This article needs additional citations for verification.",
+            "This article does not cite any sources."
     };
 
     public static void main(String[] args) throws IOException {
         boolean append = false;
-        
+
         File articleFile = new File("articles/articles.txt");
         File imageFile = new File("articles/images.txt");
-        
+
         HashSet<String> seenArticles = new HashSet<>();
         HashSet<String> seenImages = new HashSet<>();
-        
+
         int writtenCount = 0;
 
         // collect all seen articles
 
-        
         Writer imageWriter = new OutputStreamWriter(new FileOutputStream(imageFile, append), StandardCharsets.US_ASCII);
         Writer articleWriter = new OutputStreamWriter(new FileOutputStream(articleFile, append));
-        
+
         Queue<String> articles = new ArrayDeque<>(500);
 
         String start = "Valencia";
         articles.offer(start);
         // seenArticles.add(start);
 
-        while (writtenCount < 1) {
+        while (writtenCount < 250000) {
             // take the next article
             String title = articles.poll();
             if (seenArticles.contains(title)) {
                 System.out.println("[DUPLICATE] " + title);
                 continue;
             }
-            
+
             RetrieverResults results = Retriever.getArticle(title);
             if (results == null) {
                 System.out.println("[NOT FOUND] " + title);
@@ -74,22 +73,25 @@ public class Crawler {
             if (body.length() > 4000) {
                 // chop it
                 int lastIndex = 4000;
-                while (body.charAt(lastIndex) != ' ') lastIndex--;
+                while (body.charAt(lastIndex) != ' ')
+                    lastIndex--;
                 body = body.substring(0, lastIndex);
             }
-            
+
             articleWriter.write(body + "\n");
 
             List<WikipediaImage> images = results.images;
-            imageWriter.write(article.getTitle() + "\n");
-            imageWriter.write(article.getInboundLinks() + "\n");
-            imageWriter.write(images.size() + "\n");
-            for (WikipediaImage image : images) {
-                if (!seenImages.contains(image.getURL())) {
-                    seenImages.add(image.getURL());
-                    // write the image
-                    imageWriter.write(image.getURL() + "\n");
-                    imageWriter.write(image.body().replace("\n", "") + "\n");
+            if (images.size() > 0) {
+                imageWriter.write(article.getTitle() + "\n");
+                imageWriter.write(article.getInboundLinks() + "\n");
+                imageWriter.write(images.size() + "\n");
+                for (WikipediaImage image : images) {
+                    if (!seenImages.contains(image.getURL())) {
+                        seenImages.add(image.getURL());
+                        // write the image
+                        imageWriter.write(image.getURL() + "\n");
+                        imageWriter.write(image.body().replace("\n", "") + "\n");
+                    }
                 }
             }
 
@@ -99,7 +101,7 @@ public class Crawler {
             if (articles.size() < 450) {
                 for (int i = 0; i < Math.min(8, article.getLinkedArticle().size()); i++) {
                     String candidate = article.getLinkedArticle().get(
-                        (int)(Math.random() * article.getLinkedArticle().size()));
+                            (int) (Math.random() * article.getLinkedArticle().size()));
                     if (!candidate.contains(":")) {
                         if (!seenArticles.contains(candidate)) {
                             // add it to the queue

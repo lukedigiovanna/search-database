@@ -11,9 +11,10 @@ import invertedindex.InvertedIndex;
 
 public class ConstructIndex {
 
-    public static InvertedIndex<WikipediaArticle> constructArticleIndex(String filePath) throws FileNotFoundException, IOException {
+    public static InvertedIndex<WikipediaArticle> constructArticleIndex(String filePath)
+            throws FileNotFoundException, IOException {
         InvertedIndex<WikipediaArticle> index = new InvertedIndex<>();
-        
+
         int max = 1000000;
         int i = 0;
         BufferedReader reader = new BufferedReader(new FileReader("articles/articles.txt"));
@@ -28,17 +29,17 @@ public class ConstructIndex {
                 String linksStr = reader.readLine();
                 int links = Integer.parseInt(linksStr);
                 String body = reader.readLine(); // remaining of row
-                
+
                 WikipediaArticle article = new WikipediaArticle(title, body, links);
                 index.add(article);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 reader.close();
                 return null;
             }
-            
-            if (++i >= max) break;
+
+            if (++i >= max)
+                break;
         }
         reader.close();
 
@@ -49,9 +50,10 @@ public class ConstructIndex {
         return index;
     }
 
-    public static InvertedIndex<WikipediaImage> constructImageIndex(String filePath) throws FileNotFoundException, IOException {
+    public static InvertedIndex<WikipediaImage> constructImageIndex(String filePath)
+            throws FileNotFoundException, IOException {
         InvertedIndex<WikipediaImage> index = new InvertedIndex<>();
-        
+
         BufferedReader reader = new BufferedReader(new FileReader("articles/images.txt"));
         String row;
         while ((row = reader.readLine()) != null) {
@@ -66,11 +68,13 @@ public class ConstructIndex {
                 for (int i = 0; i < imgCount; i++) {
                     String url = reader.readLine();
                     String caption = reader.readLine();
+                    // if (caption == null) {
+                    //     caption = "";
+                    // }
                     WikipediaImage image = new WikipediaImage(url, caption, linkCount, articleTitle);
                     index.add(image);
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 reader.close();
                 return null;

@@ -39,40 +39,41 @@ public class Server {
         return params;
     }
 
-    private static <T extends Document> void handleSearchRequest(HttpExchange he, InvertedIndex<T> index) throws IOException {
+    private static <T extends Document> void handleSearchRequest(HttpExchange he, InvertedIndex<T> index)
+            throws IOException {
         Map<String, String> params = getQueryParams(he.getRequestURI().getQuery());
-                String term = params.get("term");
-                long currTime = System.currentTimeMillis();
-                List<DocumentWeightPair> found = index.search(term);
-                long elapsed = System.currentTimeMillis() - currTime;
-                JSONObject response = new JSONObject();
-                JSONArray results = new JSONArray();
-                int count = 0;
-                for (DocumentWeightPair pair : found) {
-                    JSONObject articleJSON = pair.document.getJSON();
-                    articleJSON.put("score", pair.weight);
-                    results.put(articleJSON);
+        String term = params.get("term");
+        long currTime = System.currentTimeMillis();
+        List<DocumentWeightPair> found = index.search(term);
+        long elapsed = System.currentTimeMillis() - currTime;
+        JSONObject response = new JSONObject();
+        JSONArray results = new JSONArray();
+        int count = 0;
+        for (DocumentWeightPair pair : found) {
+            JSONObject articleJSON = pair.document.getJSON();
+            articleJSON.put("score", pair.weight);
+            results.put(articleJSON);
 
-                    if (++count >= 100) {
-                        break; // don't put more than 100 results in
-                    }
-                }
-                response.put("results", results);
-                response.put("time", elapsed);
-                response.put("resultCount", found.size());
-                String res = response.toString();
-                System.out.println(res);
-                byte[] rawData = res.getBytes();
-                he.sendResponseHeaders(200, rawData.length);
-                OutputStream os = he.getResponseBody();
-                os.write(rawData);
-                os.close();
+            if (++count >= 100) {
+                break; // don't put more than 100 results in
+            }
+        }
+        response.put("results", results);
+        response.put("time", elapsed);
+        response.put("resultCount", found.size());
+        String res = response.toString();
+        byte[] rawData = res.getBytes();
+        he.sendResponseHeaders(200, rawData.length);
+        OutputStream os = he.getResponseBody();
+        os.write(rawData);
+        os.close();
     }
 
     private HttpServer server;
     private int port;
 
-    public Server(int port, InvertedIndex<WikipediaArticle> articleIndex, InvertedIndex<WikipediaImage> imageIndex) throws IOException {
+    public Server(int port, InvertedIndex<WikipediaArticle> articleIndex, InvertedIndex<WikipediaImage> imageIndex)
+            throws IOException {
         this.server = HttpServer.create(new InetSocketAddress(port), 0);
         this.port = port;
         this.server.createContext("/api/search", new HttpHandler() {

@@ -6,7 +6,7 @@ import articleRetrieval.Document;
 import utils.StopWords;
 import utils.Tokenizer;
 
-public class InvertedIndex< T extends Document > {
+public class InvertedIndex<T extends Document> {
     private Map<String, Set<T>> index;
 
     public InvertedIndex() {
@@ -15,7 +15,6 @@ public class InvertedIndex< T extends Document > {
 
     private static float calculatePositionalWeight(float x) {
         return 6.0f / (1.0f + (float)Math.exp(4 * x));
-        // return x;
     }
 
     /**
@@ -96,10 +95,19 @@ public class InvertedIndex< T extends Document > {
         Collections.sort(pairResults);
         Collections.reverse(pairResults);
 
-        // for (int i = 0; i < Math.min(20, pairResults.size()); i++) {
-        //     System.out.println(pairResults.get(i).article.getTitle() + ", " + pairResults.get(i).weight);
-        // }
-
         return pairResults;
+    }
+
+    public void print() {
+        int max = 0;
+        String maxKey = "";
+        for (String key : this.index.keySet()) {
+            int c = this.index.get(key).size();
+            if (c > max) {
+                max = c;
+                maxKey = key;
+            }
+        }
+        System.out.println(maxKey + ": " + max);
     }
 }

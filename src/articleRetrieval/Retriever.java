@@ -6,6 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -58,18 +59,7 @@ public class Retriever {
                             .text() // extract content
                             .replaceAll("\\[.*\\]", "") // remove references
                             .replace("\n", ""); // remove new line chars
-            // select all img tags
-            Elements elements = htmlDoc.select(".thumb");
-            for (Element el : elements) {
-                // System.out.println(el.attr("src"));
-                Element img = el.selectFirst("img");
-                String alt = img.attr("alt");
-                String url = img.attr("src").substring(47);
-                String caption = el.text().replaceAll("\\[.*\\]", "");
-                System.out.println(alt + " " + caption);
-                System.out.println(url);
-
-            }
+            
 
             JSONObject links = get("https://en.wikipedia.org/w/api.php?action=query&titles=" + articleTitle + "&prop=links&format=json&pllimit=max");
             
@@ -91,9 +81,29 @@ public class Retriever {
             JSONObject inbound = get("https://linkcount.toolforge.org/api/?page=" + articleTitle + "&project=en.wikipedia.org&namespaces=0");
             int inboundCount = inbound.getJSONObject("wikilinks").getInt("all");
 
+            // select all img tags
+            List<WikipediaImage> images = new LinkedList<>();
+            Elements elements = htmlDoc.select(".thumb");
+            for (Element el : elements) {
+                // System.out.println(el.attr("src"));
+                Element img = el.selectFirst("img");
+                String alt = img.attr("alt");
+                String url = img.attr("src").substring(47);
+                String caption = el.text().replaceAll("\\[.*\\]", "");
+                String body = "";
+                if (caption.length() > 0) {
+                    body += caption;
+                }
+                if (alt.length() > 0) {
+                    body += " " + alt;
+                }
+                WikipediaImage image = new WikipediaImage(url, body, inboundCount, articleTitle);
+                images.add(image);
+            }
+
             WikipediaArticle wikiArticle = new WikipediaArticle(fullTitle, doc, inboundCount, linksTo);
 
-            RetrieverResults results = new RetrieverResults(wikiArticle, null);
+            RetrieverResults results = new RetrieverResults(wikiArticle, images);
 
             return results;
         }

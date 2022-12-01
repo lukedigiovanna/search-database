@@ -47,17 +47,24 @@ public class Server {
                 long elapsed = System.currentTimeMillis() - currTime;
                 JSONObject response = new JSONObject();
                 JSONArray results = new JSONArray();
+                int count = 0;
                 for (DocumentWeightPair pair : found) {
                     JSONObject articleJSON = pair.document.getJSON();
                     articleJSON.put("score", pair.weight);
                     results.put(articleJSON);
+
+                    if (++count >= 100) {
+                        break; // don't put more than 100 results in
+                    }
                 }
                 response.put("results", results);
                 response.put("time", elapsed);
+                response.put("resultCount", found.size());
                 String res = response.toString();
-                he.sendResponseHeaders(200, res.length());
+                byte[] rawData = res.getBytes();
+                he.sendResponseHeaders(200, rawData.length);
                 OutputStream os = he.getResponseBody();
-                os.write(res.getBytes());
+                os.write(rawData);
                 os.close();
     }
 
@@ -86,7 +93,7 @@ public class Server {
                 BufferedReader inp = new BufferedReader(new FileReader("public_html/index.html"));
                 String line;
                 while ((line = inp.readLine()) != null) {
-                    indexHtml += line;
+                    indexHtml += line + "\n";
                 }
                 inp.close();
                 String res = indexHtml;

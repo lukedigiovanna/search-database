@@ -122,6 +122,7 @@
             async function searchImages() {
                 const val = inp.value;
                 const raw = await fetch(`/api/image-search?term=${val}`);
+                console.log(raw);
                 const response = await raw.json();
                 console.log(response);
                 results.innerHTML = "";

@@ -61,6 +61,7 @@ public class Server {
                 response.put("time", elapsed);
                 response.put("resultCount", found.size());
                 String res = response.toString();
+                System.out.println(res);
                 byte[] rawData = res.getBytes();
                 he.sendResponseHeaders(200, rawData.length);
                 OutputStream os = he.getResponseBody();

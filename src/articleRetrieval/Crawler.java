@@ -15,39 +15,42 @@ public class Crawler {
     };
 
     public static void main(String[] args) throws IOException {
-        Queue<String> articles = new ArrayDeque<>(500);
-        articles.offer("Pet door");
-
-        boolean append = true;
-
+        boolean append = false;
+        
         File articleFile = new File("articles/articles.txt");
         File imageFile = new File("articles/images.txt");
+        
+        HashSet<String> seenArticles = new HashSet<>();
+        HashSet<String> seenImages = new HashSet<>();
+        
+        int writtenCount = 0;
 
+        // collect all seen articles
 
         
         Writer imageWriter = new OutputStreamWriter(new FileOutputStream(imageFile, append), StandardCharsets.US_ASCII);
         Writer articleWriter = new OutputStreamWriter(new FileOutputStream(articleFile, append));
-
         
+        Queue<String> articles = new ArrayDeque<>(500);
 
-        HashSet<String> seenArticles = new HashSet<>();
-        HashSet<String> seenImages = new HashSet<>();
+        String start = "Valencia";
+        articles.offer(start);
+        // seenArticles.add(start);
 
-        int writtenCount = 0;
-
-        while (writtenCount < 250000) {
+        while (writtenCount < 1) {
             // take the next article
             String title = articles.poll();
             if (seenArticles.contains(title)) {
                 System.out.println("[DUPLICATE] " + title);
                 continue;
             }
-            seenArticles.add(title);
+            
             RetrieverResults results = Retriever.getArticle(title);
             if (results == null) {
                 System.out.println("[NOT FOUND] " + title);
                 continue;
             }
+            seenArticles.add(title);
             WikipediaArticle article = results.article;
             // determine if we should reject this article based on its body
             String body = article.body();
@@ -78,14 +81,15 @@ public class Crawler {
             articleWriter.write(body + "\n");
 
             List<WikipediaImage> images = results.images;
+            imageWriter.write(article.getTitle() + "\n");
+            imageWriter.write(article.getInboundLinks() + "\n");
+            imageWriter.write(images.size() + "\n");
             for (WikipediaImage image : images) {
                 if (!seenImages.contains(image.getURL())) {
                     seenImages.add(image.getURL());
                     // write the image
                     imageWriter.write(image.getURL() + "\n");
-                    imageWriter.write(article.getTitle() + "\n");
-                    imageWriter.write(image.body() + "\n");
-                    imageWriter.write(article.getInboundLinks() + "\n");
+                    imageWriter.write(image.body().replace("\n", "") + "\n");
                 }
             }
 
@@ -97,7 +101,11 @@ public class Crawler {
                     String candidate = article.getLinkedArticle().get(
                         (int)(Math.random() * article.getLinkedArticle().size()));
                     if (!candidate.contains(":")) {
-                        articles.offer(candidate);
+                        if (!seenArticles.contains(candidate)) {
+                            // add it to the queue
+                            articles.offer(candidate);
+                            // seenArticles.add(candidate);
+                        }
                     }
                 }
             }

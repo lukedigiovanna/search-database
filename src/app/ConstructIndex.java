@@ -59,13 +59,16 @@ public class ConstructIndex {
                 if (row.length() == 0) {
                     break;
                 }
-                String url = row;
-                String title = reader.readLine();
-                String caption = reader.readLine();
+                String articleTitle = row;
                 int linkCount = Integer.parseInt(reader.readLine());
-                
-                WikipediaImage image = new WikipediaImage(url, caption, linkCount, title);
-                index.add(image);
+                int imgCount = Integer.parseInt(reader.readLine());
+                System.out.println(imgCount);
+                for (int i = 0; i < imgCount; i++) {
+                    String url = reader.readLine();
+                    String caption = reader.readLine();
+                    WikipediaImage image = new WikipediaImage(url, caption, linkCount, articleTitle);
+                    index.add(image);
+                }
             }
             catch (Exception e) {
                 e.printStackTrace();

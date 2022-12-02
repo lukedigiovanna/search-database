@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            WINP - Wikipedia Inverted Index Project
+        </title>
+    </head>
+    <body>
+        <h1>
+            Wikipedia Inverted Index Project
+        </h1>
+        <p>
+            This is an implementation of a full text search engine, specifically designed
+            for searching articles and images scraped from Wikipedia.
+        </p>
+        <p>
+            Test the search engine by typing a query and clicking and execute option.
+        </p>
+        <input type="text" oninput="checkDisabled()" onfocus="checkDisabled()">
+        <button onclick="search('article')">
+            Search Articles
+        </button>
+        <button onclick="search('image')">
+            Search Images
+        </button>
+
+        <script>
+            function checkDisabled() {
+                console.log('checking')
+                if (document.querySelector("input").value.length == 0) {
+                    document.querySelectorAll("button").forEach(b => {
+                        b.disabled = true;
+                    })
+                }
+                else {
+                    document.querySelectorAll("button").forEach(b => {
+                        b.disabled = false;
+                    })
+
+                }
+            }
+            checkDisabled();
+            function search(type) {
+                const query = document.querySelector("input").value;
+                window.location.href = `/search?term=${query}&mode=${type}`;
+            }
+        </script>
+    </body>
+</html>

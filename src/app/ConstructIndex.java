@@ -17,7 +17,7 @@ public class ConstructIndex {
 
         int max = 1000000;
         int i = 0;
-        BufferedReader reader = new BufferedReader(new FileReader("articles/articles.txt"));
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
         String row;
         while ((row = reader.readLine()) != null) {
             try {
@@ -54,7 +54,7 @@ public class ConstructIndex {
             throws FileNotFoundException, IOException {
         InvertedIndex<WikipediaImage> index = new InvertedIndex<>();
 
-        BufferedReader reader = new BufferedReader(new FileReader("articles/images.txt"));
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
         String row;
         while ((row = reader.readLine()) != null) {
             try {

@@ -39,33 +39,74 @@ public class Server {
         return params;
     }
 
+    private static String getParam(Map<String, String> params, String key) {
+        if (params.containsKey(key)) {
+            return params.get(key);
+        } else {
+            return "";
+        }
+    }
+
+    private static boolean isNumeric(String s) {
+        return s.matches("^[0-9]+");
+    }
+
     private static <T extends Document> void handleSearchRequest(HttpExchange he, InvertedIndex<T> index)
             throws IOException {
+        // extract parameters
         Map<String, String> params = getQueryParams(he.getRequestURI().getQuery());
-        String term = params.get("term");
+        String term = getParam(params, "term");
+        String limitS = getParam(params, "limit");
+        int limit = 100;
+        if (isNumeric(limitS)) {
+            limit = Math.min(limit, Integer.parseInt(limitS));
+        }
+        String offsetS = getParam(params, "offset");
+        int offset = 0;
+        if (offsetS.length() > 0) {
+            offset = Integer.parseInt(offsetS);
+        }
+
+        // perform the search
         long currTime = System.currentTimeMillis();
         List<DocumentWeightPair> found = index.search(term);
         long elapsed = System.currentTimeMillis() - currTime;
         JSONObject response = new JSONObject();
         JSONArray results = new JSONArray();
-        int count = 0;
-        for (DocumentWeightPair pair : found) {
+
+        for (int i = offset; i < Math.min(offset + limit, found.size()); i++) {
+            DocumentWeightPair pair = found.get(i);
             JSONObject articleJSON = pair.document.getJSON();
             articleJSON.put("score", pair.weight);
             results.put(articleJSON);
-
-            if (++count >= 100) {
-                break; // don't put more than 100 results in
-            }
         }
+
+        // write top level JSON object
         response.put("results", results);
         response.put("time", elapsed);
         response.put("resultCount", found.size());
+
+        // write raw output
         String res = response.toString();
         byte[] rawData = res.getBytes();
         he.sendResponseHeaders(200, rawData.length);
         OutputStream os = he.getResponseBody();
         os.write(rawData);
+        os.close();
+    }
+
+    private static void handleHTMLRequest(HttpExchange he, String filePath) throws IOException {
+        String indexHtml = "";
+        BufferedReader inp = new BufferedReader(new FileReader(filePath));
+        String line;
+        while ((line = inp.readLine()) != null) {
+            indexHtml += line + "\n";
+        }
+        inp.close();
+        String res = indexHtml;
+        he.sendResponseHeaders(200, res.length());
+        OutputStream os = he.getResponseBody();
+        os.write(res.getBytes());
         os.close();
     }
 
@@ -88,11 +129,11 @@ public class Server {
                 handleSearchRequest(he, imageIndex);
             }
         });
-        this.server.createContext("/", new HttpHandler() {
+        this.server.createContext("/search", new HttpHandler() {
             @Override
             public void handle(HttpExchange he) throws IOException {
                 String indexHtml = "";
-                BufferedReader inp = new BufferedReader(new FileReader("public_html/index.html"));
+                BufferedReader inp = new BufferedReader(new FileReader("public_html/searchpage.html"));
                 String line;
                 while ((line = inp.readLine()) != null) {
                     indexHtml += line + "\n";
@@ -103,6 +144,18 @@ public class Server {
                 OutputStream os = he.getResponseBody();
                 os.write(res.getBytes());
                 os.close();
+            }
+        });
+        this.server.createContext("/search", new HttpHandler() {
+            @Override
+            public void handle(HttpExchange he) throws IOException {
+                handleHTMLRequest(he, "public_html/searchpage.html");
+            }
+        });
+        this.server.createContext("/", new HttpHandler() {
+            @Override
+            public void handle(HttpExchange he) throws IOException {
+                handleHTMLRequest(he, "public_html/home.html");
             }
         });
         this.server.setExecutor(null);

@@ -14,7 +14,7 @@ public class InvertedIndex<T extends Document> {
     }
 
     private static float calculatePositionalWeight(float x) {
-        return 6.0f / (1.0f + (float)Math.exp(4 * x));
+        return 6.0f / (1.0f + (float) Math.exp(4 * x));
     }
 
     /**
@@ -60,8 +60,8 @@ public class InvertedIndex<T extends Document> {
         }
     }
 
-    public List<DocumentWeightPair> search(String term) {
-        String[] tokens = Tokenizer.tokenize(term);
+    public List<DocumentWeightPair> search(String queryString) {
+        String[] tokens = Tokenizer.tokenize(queryString);
 
         Set<T> results = new HashSet<>();
         Map<String, Float> searchEmbedding = new HashMap<>();
@@ -72,24 +72,21 @@ public class InvertedIndex<T extends Document> {
             if (found != null) {
                 if (results.size() == 0) {
                     results.addAll(this.index.get(token));
-                }
-                else {
+                } else {
                     results.retainAll(this.index.get(token));
                 }
             }
 
             // incorporate tf-idf modification
-            searchEmbedding.put(token, 1.0f / (float)Math.log(found.size()));
+            searchEmbedding.put(token, 1.0f / (float) Math.log(found.size()));
             // searchEmbedding.put(token, 50f);
         }
         List<DocumentWeightPair> pairResults = new ArrayList<>();
         for (T d : results) {
             pairResults.add(
-                new DocumentWeightPair(
-                    d, 
-                    d.calculateRanking(searchEmbedding)
-                )
-            );
+                    new DocumentWeightPair(
+                            d,
+                            d.calculateRanking(searchEmbedding)));
         }
 
         Collections.sort(pairResults);

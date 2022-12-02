@@ -70,28 +70,81 @@
                 Search Engine Test Frame
             </h1>
             <input type="text" id="search-input"/>
-            <button onclick="searchArticles();">
+            <button onclick="search('article');">
                 search articles
             </button>
-            <button onclick="searchImages();">
+            <button onclick="search('image');">
                 search images
             </button>
         </div>
         <div id="results">
             No results
         </div>
-        <script
-            src="https://code.jquery.com/jquery-3.6.1.min.js"
-            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
-            crossorigin="anonymous">
-        </script>
         <script>
             const results = document.getElementById("results");
             const inp = document.getElementById("search-input");
+            const resultsPerPage = 20;
 
-            async function searchArticles() {
-                const val = inp.value;
-                const raw = await fetch(`/api/search?term=${val}`);
+            const urlParams = new URLSearchParams(window.location.search);
+            const term = urlParams.get("term");
+            let mode = urlParams.get("mode");
+            if (term != undefined && term.length > 0) {
+                if (mode != "image") {
+                    mode = "article";
+                }
+                let page = urlParams.get("page");
+                if (page == undefined) {
+                    page = 0;
+                }
+                else {
+                    page = Number.parseInt(page);
+                }
+                inp.value = term;
+                if (mode == "article") {
+                    searchArticles(term, page);
+                }
+                else {
+                    searchImages(term, page);
+                }
+            }
+            else {
+                // redirect to home.
+                window.location.href = "/";
+            }
+
+            function search(type) {
+                const query = inp.value;
+                window.location.href = `/search?term=${query}&mode=${type}`;
+            }
+
+            function createNextPreviousButtons(page, numResults, perPage) {
+                const div = document.createElement("div");
+                const p = document.createElement("p");
+                p.innerText = `Showing results ${page * perPage + 1} to ${Math.min(page * perPage + perPage, numResults)}`;
+                div.appendChild(p);
+                if (page > 0) {
+                    // add a previous button
+                    const prev = document.createElement("button");
+                    prev.onclick = () => {
+                        window.location.href = `/search?term=${term}&mode=${mode}&page=${page - 1}`
+                    }
+                    prev.innerText = "previous page"
+                    div.appendChild(prev);
+                }
+                if (page * perPage + perPage <= numResults) {
+                    const next = document.createElement("button");
+                    next.onclick = () => {
+                        window.location.href = `/search?term=${term}&mode=${mode}&page=${page + 1}`
+                    }
+                    next.innerText = "next page"
+                    div.appendChild(next);
+                }
+
+                return div;
+            }
+
+            async function searchArticles(val, page) {
+                const raw = await fetch(`/api/search?term=${val}&offset=${page * resultsPerPage}&limit=${resultsPerPage}`);
                 const response = await raw.json();
                 
                 results.innerHTML = "";
@@ -111,6 +164,8 @@
                     results.appendChild(link);
                     results.appendChild(body);
                 });
+                results.appendChild(document.createElement("br"));
+                results.appendChild(createNextPreviousButtons(page, response.resultCount, resultsPerPage));
             }
 
             function createColumn() {
@@ -119,8 +174,7 @@
                 return col;
             }
 
-            async function searchImages() {
-                const val = inp.value;
+            async function searchImages(val, page) {
                 const raw = await fetch(`/api/image-search?term=${val}`);
                 console.log(raw);
                 const response = await raw.json();

@@ -66,15 +66,18 @@
     </head>
     <body>
         <div id="navbar">
+            <button onclick="window.location.href = '/'">
+                home
+            </button>
             <h1>
                 Search Engine Test Frame
             </h1>
             <input type="text" id="search-input"/>
             <button onclick="search('article');">
-                search articles
+                Search Articles
             </button>
             <button onclick="search('image');">
-                search images
+                Search Images
             </button>
         </div>
         <div id="results">
@@ -175,7 +178,7 @@
             }
 
             async function searchImages(val, page) {
-                const raw = await fetch(`/api/image-search?term=${val}`);
+                const raw = await fetch(`/api/image-search?term=${val}&offset=${page * 100}&limit=${100}`);
                 console.log(raw);
                 const response = await raw.json();
                 console.log(response);
@@ -209,6 +212,7 @@
                     row.appendChild(col);
                 });
                 results.appendChild(row);
+                results.appendChild(createNextPreviousButtons(page, response.resultCount, 100));
             }
         </script>
     </body>

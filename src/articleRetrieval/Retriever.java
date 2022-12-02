@@ -27,7 +27,7 @@ public class Retriever {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             BufferedReader in = new BufferedReader(
-                new InputStreamReader(conn.getInputStream()));
+                    new InputStreamReader(conn.getInputStream()));
             String inputLine;
             StringBuffer content = new StringBuffer();
             while ((inputLine = in.readLine()) != null) {
@@ -36,8 +36,7 @@ public class Retriever {
             in.close();
 
             return new JSONObject(content.toString());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return null;
         }
     }
@@ -46,23 +45,24 @@ public class Retriever {
         articleTitle = articleTitle.replace(' ', '_');
         // makes requests to the wikipedia API to get the content of the given article
         try {
-            JSONObject article = get("https://en.wikipedia.org/w/api.php?action=parse&page="+articleTitle+"&prop=text&format=json&redirects=true");            
+            JSONObject article = get("https://en.wikipedia.org/w/api.php?action=parse&page=" + articleTitle
+                    + "&prop=text&format=json&redirects=true");
             JSONObject parse = article.getJSONObject("parse");
             if (parse == null) {
                 return null;
             }
             String fullTitle = parse.getString("title");
             String htmlContent = parse.getJSONObject("text")
-                                .getString("*");
+                    .getString("*");
             Document htmlDoc = Jsoup.parse(htmlContent);
             String doc = htmlDoc.children().select("p")
-                            .text() // extract content
-                            .replaceAll("\\[.*\\]", "") // remove references
-                            .replace("\n", ""); // remove new line chars
-            
+                    .text() // extract content
+                    .replaceAll("\\[.*\\]", "") // remove references
+                    .replace("\n", ""); // remove new line chars
 
-            JSONObject links = get("https://en.wikipedia.org/w/api.php?action=query&titles=" + articleTitle + "&prop=links&format=json&pllimit=max");
-            
+            JSONObject links = get("https://en.wikipedia.org/w/api.php?action=query&titles=" + articleTitle
+                    + "&prop=links&format=json&pllimit=max");
+
             JSONObject pages = links.getJSONObject("query").getJSONObject("pages");
             String pageName = pages.keys().next();
             JSONArray arr = pages.getJSONObject(pageName).getJSONArray("links");
@@ -71,14 +71,14 @@ public class Retriever {
 
             while (it.hasNext()) {
                 try {
-                    linksTo.add( 
-                        ((JSONObject)it.next()).getString("title")
-                    );
+                    linksTo.add(
+                            ((JSONObject) it.next()).getString("title"));
+                } catch (Exception e) {
                 }
-                catch (Exception e) {}
             }
 
-            JSONObject inbound = get("https://linkcount.toolforge.org/api/?page=" + articleTitle + "&project=en.wikipedia.org&namespaces=0");
+            JSONObject inbound = get("https://linkcount.toolforge.org/api/?page=" + articleTitle
+                    + "&project=en.wikipedia.org&namespaces=0");
             int inboundCount = inbound.getJSONObject("wikilinks").getInt("all");
 
             // select all img tags
@@ -95,7 +95,10 @@ public class Retriever {
                     body += caption;
                 }
                 if (alt.length() > 0) {
-                    body += " " + alt;
+                    if (body.length() > 0) {
+                        body += " ";
+                    }
+                    body += alt;
                 }
                 WikipediaImage image = new WikipediaImage(url, body, inboundCount, articleTitle);
                 images.add(image);
@@ -106,13 +109,11 @@ public class Retriever {
             RetrieverResults results = new RetrieverResults(wikiArticle, images);
 
             return results;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             return null;
         }
-        
-    }
 
+    }
 
     /**
      * Tests single instance of Retriever.getArticle function.

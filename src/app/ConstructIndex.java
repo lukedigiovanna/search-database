@@ -64,13 +64,9 @@ public class ConstructIndex {
                 String articleTitle = row;
                 int linkCount = Integer.parseInt(reader.readLine());
                 int imgCount = Integer.parseInt(reader.readLine());
-                System.out.println(imgCount);
                 for (int i = 0; i < imgCount; i++) {
                     String url = reader.readLine();
                     String caption = reader.readLine();
-                    // if (caption == null) {
-                    //     caption = "";
-                    // }
                     WikipediaImage image = new WikipediaImage(url, caption, linkCount, articleTitle);
                     index.add(image);
                 }

@@ -2,8 +2,7 @@ package app;
 
 import java.io.IOException;
 
-import articleRetrieval.*;
-import invertedindex.InvertedIndex;
+import externalInvertedIndex.ExternalInvertedIndex;
 import utils.MemoryCheck;
 
 public class Driver {
@@ -11,14 +10,14 @@ public class Driver {
     public static void main(String[] args) throws IOException {
         // set up article index
         System.out.println("[-] Constructing article index");
-        InvertedIndex<WikipediaArticle> articleIndex = ConstructIndex
-                .constructArticleIndex("articles/articles-sample.txt");
+        ExternalInvertedIndex articleIndex = new ExternalInvertedIndex("articles/articles.txt");
+        articleIndex.readFromIndexFile("database/articles.i");
         System.out.println("[-] Finished article index");
 
         // set up image index
         System.out.println("[-] Constructing image index");
-        InvertedIndex<WikipediaImage> imageIndex = ConstructIndex
-                .constructImageIndex("articles/images-sample.txt");
+        ExternalInvertedIndex imageIndex = new ExternalInvertedIndex("articles/images.txt");
+        imageIndex.readFromIndexFile("database/images.i");
         System.out.println("[-] Finished image index");
 
         // check on memory usage

@@ -13,11 +13,9 @@ import org.json.*;
 
 import com.sun.net.httpserver.*;
 
-import articleRetrieval.Document;
-import articleRetrieval.WikipediaArticle;
-import articleRetrieval.WikipediaImage;
+import externalInvertedIndex.ExternalInvertedIndex;
 import invertedindex.DocumentWeightPair;
-import invertedindex.InvertedIndex;
+import utils.Pair;
 
 /**
  * Sets up a server that will handle requests for search operations.
@@ -51,7 +49,9 @@ public class Server {
         return s.matches("^[0-9]+");
     }
 
-    private static <T extends Document> void handleSearchRequest(HttpExchange he, InvertedIndex<T> index)
+    private static int ARTICLE = 0, IMAGE = 1;
+
+    private static void handleSearchRequest(HttpExchange he, ExternalInvertedIndex index, int type)
             throws IOException {
         // extract parameters
         Map<String, String> params = getQueryParams(he.getRequestURI().getQuery());
@@ -69,12 +69,18 @@ public class Server {
 
         // perform the search
         long currTime = System.currentTimeMillis();
-        List<DocumentWeightPair> found = index.search(term);
+        List<Pair<Integer, Float>> searchPairs = index.search(term);
+        List<DocumentWeightPair> found;
+        if (type == ARTICLE) {
+            found = index.getArticleData(searchPairs, offset, limit);
+        } else {
+            found = index.getImageData(searchPairs, offset, limit);
+        }
         long elapsed = System.currentTimeMillis() - currTime;
         JSONObject response = new JSONObject();
         JSONArray results = new JSONArray();
 
-        for (int i = offset; i < Math.min(offset + limit, found.size()); i++) {
+        for (int i = 0; i < found.size(); i++) {
             DocumentWeightPair pair = found.get(i);
             JSONObject articleJSON = pair.document.getJSON();
             articleJSON.put("score", pair.weight);
@@ -84,7 +90,7 @@ public class Server {
         // write top level JSON object
         response.put("results", results);
         response.put("time", elapsed);
-        response.put("resultCount", found.size());
+        response.put("resultCount", searchPairs.size());
 
         // write raw output
         String res = response.toString();
@@ -113,20 +119,20 @@ public class Server {
     private HttpServer server;
     private int port;
 
-    public Server(int port, InvertedIndex<WikipediaArticle> articleIndex, InvertedIndex<WikipediaImage> imageIndex)
+    public Server(int port, ExternalInvertedIndex articleIndex, ExternalInvertedIndex imageIndex)
             throws IOException {
         this.server = HttpServer.create(new InetSocketAddress(port), 0);
         this.port = port;
         this.server.createContext("/api/search", new HttpHandler() {
             @Override
             public void handle(HttpExchange he) throws IOException {
-                handleSearchRequest(he, articleIndex);
+                handleSearchRequest(he, articleIndex, ARTICLE);
             }
         });
         this.server.createContext("/api/image-search", new HttpHandler() {
             @Override
             public void handle(HttpExchange he) throws IOException {
-                handleSearchRequest(he, imageIndex);
+                handleSearchRequest(he, imageIndex, IMAGE);
             }
         });
         this.server.createContext("/search", new HttpHandler() {

@@ -5,12 +5,18 @@ import utils.StopWords;
 import utils.Tokenizer;
 
 import java.util.*;
+
+import articleRetrieval.WikipediaArticle;
+import articleRetrieval.WikipediaImage;
+import invertedindex.DocumentWeightPair;
+
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -24,9 +30,12 @@ public class ExternalInvertedIndex {
     // associates term with a set of document ID's that contain that term
     private Map<String, Map<Integer, Float>> index; // string is the term, integer is the document ID
 
-    public ExternalInvertedIndex() {
+    private String dataFile;
+
+    public ExternalInvertedIndex(String dataFile) {
         this.documentOffsets = new ArrayList<>();
         this.index = new HashMap<>();
+        this.dataFile = dataFile;
     }
 
     public void add(ExternalDocument d) {
@@ -87,14 +96,12 @@ public class ExternalInvertedIndex {
 
         for (String token : tokens) {
             Map<Integer, Float> found = this.index.get(token);
-            if (found != null) {
-                if (results.size() == 0) {
-                    results.addAll(found.keySet());
-                } else {
-                    results.retainAll(found.keySet());
-                }
-                searchEmbedding.put(token, 1.0f / (float) Math.log(found.size()));
+            if (results.size() == 0) {
+                results.addAll(found.keySet());
+            } else {
+                results.retainAll(found.keySet());
             }
+            searchEmbedding.put(token, 1.0f / (float) Math.log(found.size()));
         }
 
         List<Pair<Integer, Float>> pairResults = new ArrayList<>();
@@ -103,6 +110,7 @@ public class ExternalInvertedIndex {
             for (String term : searchEmbedding.keySet()) {
                 score += searchEmbedding.get(term) * this.index.get(term).get(id);
             }
+            score *= Math.log10(this.documentOffsets.get(id).second);
             pairResults.add(new Pair<>(id, score));
         }
 
@@ -132,16 +140,31 @@ public class ExternalInvertedIndex {
         FileOutputStream file = new FileOutputStream(new File(filePath));
         BufferedOutputStream buffer = new BufferedOutputStream(file);
         DataOutputStream data = new DataOutputStream(buffer);
-        data.writeInt(this.index.size());
+
+        int count = 0;
+        for (String term : this.index.keySet()) {
+            if (this.index.get(term).size() > 1) {
+                count++;
+            }
+        }
+
+        data.writeInt(count);
         data.writeInt(this.documentOffsets.size());
         // write index data
         for (String term : this.index.keySet()) {
+            if (this.index.get(term).size() < 2) {
+                continue;
+            }
             // write the term
+            if (term.length() > 255) {
+                System.out.println("How did that happen");
+            }
             data.writeByte(term.length());
             data.writeBytes(term);
             // write the number of documents that contain this term
             Map<Integer, Float> docs = this.index.get(term);
             data.writeInt(docs.size());
+            // System.out.println(term + " " + docs.size());
             // write the document ID's and embeddings
             for (int docID : docs.keySet()) {
                 data.writeInt(docID);
@@ -181,6 +204,7 @@ public class ExternalInvertedIndex {
                 int numDocsForTerm = buffer.getInt();
                 // read the document ID's and embeddings
                 Map<Integer, Float> docs = new HashMap<>();
+                // System.out.println(term + " " + numDocsForTerm);
                 for (int j = 0; j < numDocsForTerm; j++) {
                     int docID = buffer.getInt();
                     float embedding = buffer.getFloat();
@@ -200,6 +224,55 @@ public class ExternalInvertedIndex {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<DocumentWeightPair> getArticleData(List<Pair<Integer, Float>> results, int offset, int count) {
+        List<DocumentWeightPair> data = new ArrayList<>();
+        try {
+            RandomAccessFile file = new RandomAccessFile(this.dataFile, "r");
+            int end = Math.min(offset + count, results.size());
+            for (int i = offset; i < end; i++) {
+                Pair<Integer, Float> result = results.get(i);
+                Pair<Long, Integer> doc = this.documentOffsets.get(result.first);
+                long byteOffset = doc.first;
+                int links = doc.second;
+                float weight = result.second;
+                file.seek(byteOffset);
+                String title = file.readLine();
+                file.readLine();
+                String text = file.readLine();
+                WikipediaArticle article = new WikipediaArticle(title, text, links);
+                data.add(new DocumentWeightPair(article, weight));
+            }
+            file.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return data;
+    }
+
+    public List<DocumentWeightPair> getImageData(List<Pair<Integer, Float>> results, int offset, int count) {
+        List<DocumentWeightPair> data = new ArrayList<>();
+        try {
+            RandomAccessFile file = new RandomAccessFile(this.dataFile, "r");
+            int end = Math.min(offset + count, results.size());
+            for (int i = offset; i < end; i++) {
+                Pair<Integer, Float> result = results.get(i);
+                Pair<Long, Integer> doc = this.documentOffsets.get(result.first);
+                long byteOffset = doc.first;
+                int links = doc.second;
+                float weight = result.second;
+                file.seek(byteOffset);
+                String url = file.readLine();
+                String text = file.readLine();
+                WikipediaImage image = new WikipediaImage(url, text, links, "");
+                data.add(new DocumentWeightPair(image, weight));
+            }
+            file.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return data;
     }
 
     public void printFrequencyReport() {

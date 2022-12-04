@@ -39,7 +39,7 @@ public class Crawler {
             articles.offer(start);
             // seenArticles.add(start);
 
-            while (writtenCount < 500) {
+            while (writtenCount < 1000000) {
                 // take the next article
                 String title = articles.poll();
                 if (seenArticles.contains(title)) {

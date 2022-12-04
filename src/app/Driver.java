@@ -12,13 +12,13 @@ public class Driver {
         // set up article index
         System.out.println("[-] Constructing article index");
         InvertedIndex<WikipediaArticle> articleIndex = ConstructIndex
-                .constructArticleIndex("articles/articles.txt");
+                .constructArticleIndex("articles/articles-sample.txt");
         System.out.println("[-] Finished article index");
 
         // set up image index
         System.out.println("[-] Constructing image index");
         InvertedIndex<WikipediaImage> imageIndex = ConstructIndex
-                .constructImageIndex("articles/images.txt");
+                .constructImageIndex("articles/images-sample.txt");
         System.out.println("[-] Finished image index");
 
         // check on memory usage

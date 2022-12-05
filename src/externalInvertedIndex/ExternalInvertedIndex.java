@@ -215,6 +215,10 @@ public class ExternalInvertedIndex {
             // now read document data
             for (int i = 0; i < numDocs; i++) {
                 long offset = buffer.getLong();
+                // System.out.println(offset);
+                // if (i > 10) {
+                //     System.exit(0);
+                // }
                 int links = buffer.getInt();
                 this.documentOffsets.add(new Pair<>(offset, links));
             }

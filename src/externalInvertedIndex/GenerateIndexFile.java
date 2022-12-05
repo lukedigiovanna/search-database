@@ -31,7 +31,7 @@ public class GenerateIndexFile {
 
                 ExternalDocument article = new ExternalDocument(title, body, links, bytesRead);
 
-                bytesRead += title.length() + linksStr.length() + body.length() + 3;
+                bytesRead += (title.length() + linksStr.length() + body.length() + 3);
 
                 index.add(article);
             } catch (Exception e) {

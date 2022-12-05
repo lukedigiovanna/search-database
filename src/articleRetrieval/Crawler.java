@@ -31,11 +31,12 @@ public class Crawler {
 
             Writer imageWriter = new OutputStreamWriter(new FileOutputStream(imageFile, append),
                     StandardCharsets.US_ASCII);
-            Writer articleWriter = new OutputStreamWriter(new FileOutputStream(articleFile, append));
+            Writer articleWriter = new OutputStreamWriter(new FileOutputStream(articleFile, append),
+                    StandardCharsets.US_ASCII);
 
             Queue<String> articles = new ArrayDeque<>(500);
 
-            String start = "Valencia";
+            String start = "Search engine";
             articles.offer(start);
             // seenArticles.add(start);
 

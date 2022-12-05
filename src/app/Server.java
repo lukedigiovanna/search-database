@@ -138,23 +138,6 @@ public class Server {
         this.server.createContext("/search", new HttpHandler() {
             @Override
             public void handle(HttpExchange he) throws IOException {
-                String indexHtml = "";
-                BufferedReader inp = new BufferedReader(new FileReader("public_html/searchpage.html"));
-                String line;
-                while ((line = inp.readLine()) != null) {
-                    indexHtml += line + "\n";
-                }
-                inp.close();
-                String res = indexHtml;
-                he.sendResponseHeaders(200, res.length());
-                OutputStream os = he.getResponseBody();
-                os.write(res.getBytes());
-                os.close();
-            }
-        });
-        this.server.createContext("/search", new HttpHandler() {
-            @Override
-            public void handle(HttpExchange he) throws IOException {
                 handleHTMLRequest(he, "public_html/searchpage.html");
             }
         });

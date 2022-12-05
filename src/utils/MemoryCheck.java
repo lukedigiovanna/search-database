@@ -12,12 +12,12 @@ public class MemoryCheck {
         long allocatedMemory = runtime.totalMemory();
         long freeMemory = runtime.freeMemory();
         System.out.println("[-] Memory report:");
-        System.out.println("Free memory: " + freeMemory / 1024 + " kB");
-        System.out.println("Allocated memory: " + allocatedMemory / 1024 + " kB");
-        System.out.println("Max memory: " + maxMemory / 1024 + " kB");
-        System.out.println("Total free memory: " + (freeMemory + (maxMemory - allocatedMemory)) / 1024 + " kB");
+        System.out.println("\tFree memory: " + freeMemory / 1024 + " kB");
+        System.out.println("\tAllocated memory: " + allocatedMemory / 1024 + " kB");
+        System.out.println("\tMax memory: " + maxMemory / 1024 + " kB");
+        System.out.println("\tTotal free memory: " + (freeMemory + (maxMemory - allocatedMemory)) / 1024 + " kB");
     
-        System.out.println("Using " + freeMemory / 1000000000.0 + " GB");
+        System.out.println("\tUsing " + allocatedMemory / 1024.0 / 1024.0 / 1024.0 + " GB");
     }
 
 }

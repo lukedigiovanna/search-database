@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.charset.StandardCharsets;
 import java.io.FileReader;
 
 public class GenerateIndexFile {
@@ -27,8 +26,6 @@ public class GenerateIndexFile {
                     break;
                 }
 
-                
-
                 String title = row;
                 String linksStr = reader.readLine();
                 int links = Integer.parseInt(linksStr);
@@ -37,12 +34,6 @@ public class GenerateIndexFile {
                 ExternalDocument article = new ExternalDocument(title, body, links, bytesRead);
 
                 bytesRead = reader.getFilePointer();
-                // bytesRead += (
-                //     title.getBytes(StandardCharsets.UTF_8).length 
-                //     + linksStr.getBytes(StandardCharsets.UTF_8).length 
-                //     + body.getBytes(StandardCharsets.UTF_8).length 
-                //     + 3);
-                // bytesRead += (title.getBytes().length + linksStr.getBytes().length + body. + 3);
                 
                 index.add(article);
             } catch (Exception e) {

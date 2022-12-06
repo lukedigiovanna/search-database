@@ -2,7 +2,6 @@ package externalInvertedIndex;
 
 import utils.Pair;
 import utils.StopWords;
-import utils.StringUtils;
 import utils.Tokenizer;
 
 import java.util.*;
@@ -11,15 +10,7 @@ import articleRetrieval.WikipediaArticle;
 import articleRetrieval.WikipediaImage;
 import invertedindex.DocumentWeightPair;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -298,17 +289,14 @@ public class ExternalInvertedIndex {
                 // fetch article data
                 DocumentData doc = this.documentOffsets.get(i);
                 long byteOffset = doc.offset;
-                int links = doc.links;
                 
                 file.seek(byteOffset);
                 String readTitle = file.readLine();
                 String readLinks = file.readLine();
-                String readText = file.readLine();
-
+                
                 String realTitle = reader.readLine();
                 String realLinks = reader.readLine();
-                String realText = reader.readLine();
-
+                
                 if (!readLinks.equals(realLinks)) {
                     // then we have a problem here!
                     System.out.println("[-] VALIDATION ERROR DISCOVERED");

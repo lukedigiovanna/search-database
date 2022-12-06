@@ -49,11 +49,20 @@
                 color: black;
             }
 
+            
             .image-result:hover {
                 -webkit-line-clamp: 40; /* number of lines to show */
-                        line-clamp: 40;
+                line-clamp: 40;
             }
-
+            
+            .body {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 3; /* number of lines to show */
+                        line-clamp: 3; 
+                -webkit-box-orient: vertical;
+            }
             .image-link {
                 text-decoration: none;
             }
@@ -153,6 +162,7 @@
                 const total = document.createElement("p");
                 total.innerText = "Found " + response.resultCount + " articles in " + (response.time / 1000) + "s.";
                 results.appendChild(total);
+                results.appendChild(createNextPreviousButtons(page, response.resultCount, resultsPerPage));
                 response.results.forEach(article => {
                     const title = document.createElement("h1");
                     title.innerText = article.title + ": " + article.score;
@@ -161,7 +171,8 @@
                     link.href = url;
                     link.innerText = url;
                     const body = document.createElement("p");
-                    body.innerText = article.body.substring(0, 300);
+                    body.className = "body";
+                    body.innerText = article.body;
                     results.appendChild(title);
                     results.appendChild(link);
                     results.appendChild(body);
@@ -185,6 +196,7 @@
                 const total = document.createElement("p");
                 total.innerText = "Found " + response.resultCount + " images in " + (response.time / 1000) + "s.";
                 results.appendChild(total);
+                results.appendChild(createNextPreviousButtons(page, response.resultCount, 100));
                 const row = document.createElement("div");
                 row.className = "image-row";
                 const cols = [

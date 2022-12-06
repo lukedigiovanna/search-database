@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.io.FileReader;
 
 public class GenerateIndexFile {
@@ -12,7 +14,8 @@ public class GenerateIndexFile {
         // this function will read in raw article data from the given filepath
         // it will construct the external inverted index file
         File file = new File(inputData);
-        BufferedReader reader = new BufferedReader(new FileReader(file));
+        // BufferedReader reader = new BufferedReader(new FileReader(file));
+        RandomAccessFile reader = new RandomAccessFile(file, "r");
         ExternalInvertedIndex index = new ExternalInvertedIndex(inputData);
         String row;
         long bytesRead = 0;
@@ -24,6 +27,8 @@ public class GenerateIndexFile {
                     break;
                 }
 
+                
+
                 String title = row;
                 String linksStr = reader.readLine();
                 int links = Integer.parseInt(linksStr);
@@ -31,8 +36,14 @@ public class GenerateIndexFile {
 
                 ExternalDocument article = new ExternalDocument(title, body, links, bytesRead);
 
-                bytesRead += (title.length() + linksStr.length() + body.length() + 3);
-
+                bytesRead = reader.getFilePointer();
+                // bytesRead += (
+                //     title.getBytes(StandardCharsets.UTF_8).length 
+                //     + linksStr.getBytes(StandardCharsets.UTF_8).length 
+                //     + body.getBytes(StandardCharsets.UTF_8).length 
+                //     + 3);
+                // bytesRead += (title.getBytes().length + linksStr.getBytes().length + body. + 3);
+                
                 index.add(article);
             } catch (Exception e) {
                 e.printStackTrace();

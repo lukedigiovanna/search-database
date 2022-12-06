@@ -7,14 +7,15 @@ import utils.Pair;
 public class TestIndex {
     public static void main(String[] args) {
 
-        ExternalInvertedIndex articleIndex = new ExternalInvertedIndex("articles/articles-sample.txt");
+        ExternalInvertedIndex articleIndex = new ExternalInvertedIndex("articles/articles.txt");
         System.out.println("[-] Loading article index");
         long start = System.nanoTime();
         articleIndex.readFromIndexFile("database/articles.i");
         long elapsed = (System.nanoTime() - start) / 1000;
         System.out.println("[-] Finished loading index in " + elapsed + "us");
+        articleIndex.validate();
 
-        ExternalInvertedIndex imageIndex = new ExternalInvertedIndex("articles/images-sample.txt");
+        ExternalInvertedIndex imageIndex = new ExternalInvertedIndex("articles/images.txt");
         System.out.println("[-] Loading article index");
         start = System.nanoTime();
         imageIndex.readFromIndexFile("database/images.i");

@@ -16,6 +16,7 @@ import com.sun.net.httpserver.*;
 import externalInvertedIndex.ExternalInvertedIndex;
 import invertedindex.DocumentWeightPair;
 import utils.Pair;
+import utils.StringUtils;
 
 /**
  * Sets up a server that will handle requests for search operations.
@@ -45,10 +46,6 @@ public class Server {
         }
     }
 
-    private static boolean isNumeric(String s) {
-        return s.matches("^[0-9]+");
-    }
-
     private static int ARTICLE = 0, IMAGE = 1;
 
     private static void handleSearchRequest(HttpExchange he, ExternalInvertedIndex index, int type)
@@ -58,7 +55,7 @@ public class Server {
         String term = getParam(params, "term");
         String limitS = getParam(params, "limit");
         int limit = 100;
-        if (isNumeric(limitS)) {
+        if (StringUtils.isNumeric(limitS)) {
             limit = Math.min(limit, Integer.parseInt(limitS));
         }
         String offsetS = getParam(params, "offset");

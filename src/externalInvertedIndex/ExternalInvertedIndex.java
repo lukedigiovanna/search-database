@@ -2,6 +2,7 @@ package externalInvertedIndex;
 
 import utils.Pair;
 import utils.StopWords;
+import utils.StringUtils;
 import utils.Tokenizer;
 
 import java.util.*;
@@ -11,10 +12,12 @@ import articleRetrieval.WikipediaImage;
 import invertedindex.DocumentWeightPair;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
@@ -26,7 +29,7 @@ public class ExternalInvertedIndex {
     }
 
     // the offsets in that file are stored where each index of this list is the ID of the doc
-    private List<Pair<Long, Integer>> documentOffsets;
+    private List<DocumentData> documentOffsets;
     // associates term with a set of document ID's that contain that term
     private Map<String, Map<Integer, Float>> index; // string is the term, integer is the document ID
 
@@ -80,7 +83,7 @@ public class ExternalInvertedIndex {
         }
 
         // now add the document offset to the list
-        this.documentOffsets.add(new Pair<>(d.offset, d.links));
+        this.documentOffsets.add(new DocumentData(d.offset, d.links, (short)d.body.length()));
     }
 
     /**
@@ -101,6 +104,7 @@ public class ExternalInvertedIndex {
             } else {
                 results.retainAll(found.keySet());
             }
+            // implements tf idf
             searchEmbedding.put(token, 1.0f / (float) Math.log(found.size()));
         }
 
@@ -110,7 +114,8 @@ public class ExternalInvertedIndex {
             for (String term : searchEmbedding.keySet()) {
                 score += searchEmbedding.get(term) * this.index.get(term).get(id);
             }
-            score *= Math.log10(this.documentOffsets.get(id).second);
+            score *= Math.log10(this.documentOffsets.get(id).links);
+            score *= Math.log10(this.documentOffsets.get(id).length);
             pairResults.add(new Pair<>(id, score));
         }
 
@@ -172,9 +177,10 @@ public class ExternalInvertedIndex {
             }
         }
         // now write document data
-        for (Pair<Long, Integer> doc : this.documentOffsets) {
-            data.writeLong(doc.first);
-            data.writeInt(doc.second);
+        for (DocumentData doc : this.documentOffsets) {
+            data.writeLong(doc.offset);
+            data.writeInt(doc.links);
+            data.writeShort(doc.length);
         }
         data.close();
     }
@@ -215,12 +221,9 @@ public class ExternalInvertedIndex {
             // now read document data
             for (int i = 0; i < numDocs; i++) {
                 long offset = buffer.getLong();
-                // System.out.println(offset);
-                // if (i > 10) {
-                //     System.exit(0);
-                // }
                 int links = buffer.getInt();
-                this.documentOffsets.add(new Pair<>(offset, links));
+                short length = buffer.getShort();
+                this.documentOffsets.add(new DocumentData(offset, links, length));
             }
 
             channel.close();
@@ -237,10 +240,11 @@ public class ExternalInvertedIndex {
             int end = Math.min(offset + count, results.size());
             for (int i = offset; i < end; i++) {
                 Pair<Integer, Float> result = results.get(i);
-                Pair<Long, Integer> doc = this.documentOffsets.get(result.first);
-                long byteOffset = doc.first;
-                int links = doc.second;
+                DocumentData doc = this.documentOffsets.get(result.first);
+                long byteOffset = doc.offset;
+                int links = doc.links;
                 float weight = result.second;
+                
                 file.seek(byteOffset);
                 String title = file.readLine();
                 file.readLine();
@@ -262,10 +266,11 @@ public class ExternalInvertedIndex {
             int end = Math.min(offset + count, results.size());
             for (int i = offset; i < end; i++) {
                 Pair<Integer, Float> result = results.get(i);
-                Pair<Long, Integer> doc = this.documentOffsets.get(result.first);
-                long byteOffset = doc.first;
-                int links = doc.second;
+                DocumentData doc = this.documentOffsets.get(result.first);
+                long byteOffset = doc.offset;
+                int links = doc.links;
                 float weight = result.second;
+
                 file.seek(byteOffset);
                 String url = file.readLine();
                 String text = file.readLine();
@@ -277,6 +282,56 @@ public class ExternalInvertedIndex {
             e.printStackTrace();
         }
         return data;
+    }
+
+    /**
+     * Validates that the document offsets stored in this index correctly
+     * correspond to the data in the data file.
+     * @return  True if it is valid data, false otherwise
+     */
+    public boolean validate() {
+        System.out.println("[-] Validating index matches " + this.dataFile);
+        try {
+            RandomAccessFile file = new RandomAccessFile(this.dataFile, "r");
+            BufferedReader reader = new BufferedReader(new FileReader(this.dataFile));
+            for (int i = 0; i < this.documentOffsets.size(); i++) {
+                // fetch article data
+                DocumentData doc = this.documentOffsets.get(i);
+                long byteOffset = doc.offset;
+                int links = doc.links;
+                
+                file.seek(byteOffset);
+                String readTitle = file.readLine();
+                String readLinks = file.readLine();
+                String readText = file.readLine();
+
+                String realTitle = reader.readLine();
+                String realLinks = reader.readLine();
+                String realText = reader.readLine();
+
+                if (!readLinks.equals(realLinks)) {
+                    // then we have a problem here!
+                    System.out.println("[-] VALIDATION ERROR DISCOVERED");
+                    System.out.println("\tOccurs on article #" + (i + 1));
+                    System.out.println("\tOccurs at byte offset " + byteOffset + " (" + String.format("0x%x", byteOffset) + ")");
+                    System.out.println("\tReal title: " + realTitle);
+                    System.out.println("\tProblem title: " + readTitle);
+                    System.out.println("\tReal links: " + realLinks);
+                    System.out.println("\tProblem links: " + readLinks);
+                    file.close();
+                    reader.close();
+                    return false; // invalid :(
+                }
+            }
+            reader.close();
+            file.close();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
     }
 
     public void printFrequencyReport() {

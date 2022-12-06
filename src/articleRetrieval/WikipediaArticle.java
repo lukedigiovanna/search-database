@@ -89,7 +89,7 @@ public class WikipediaArticle implements Document {
     public JSONObject getJSON() {
         JSONObject obj = new JSONObject();
         obj.put("title", this.title);
-        obj.put("body", this.body);
+        obj.put("body", this.body.trim().replaceAll(" +", " "));
         obj.put("inboundLinks", this.inboundLinks);
         return obj;
     }
